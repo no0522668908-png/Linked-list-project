@@ -1,210 +1,426 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="he" dir="rtl">
 <head>
-<meta charset="UTF-8">
+<meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>מעבדת הרשימות המקושרות</title>
+<title>מעבדת רשימות מקושרות | L₃</title>
 <style>
+:root{font-family:Arial,'Segoe UI',sans-serif;color:#18263e;background:#f3f6fb}
 *{box-sizing:border-box}
-body{margin:0;background:#f0f4ff;font-family:Arial,sans-serif;color:#172554}
-header{background:linear-gradient(120deg,#4338ca,#0891b2);color:white;padding:35px;text-align:center}
-main{max-width:950px;margin:25px auto;padding:15px}
-.card{background:white;border-radius:18px;padding:25px;margin-bottom:20px;box-shadow:0 5px 20px #17255415}
-h1{margin:0 0 12px}h2{color:#3730a3}
-input,select{width:100%;padding:13px;margin:8px 0 18px;border:1px solid #cbd5e1;border-radius:9px;font-size:17px;direction:ltr;text-align:left}
-button{background:#4f46e5;color:white;border:0;border-radius:10px;padding:13px 22px;font-size:16px;cursor:pointer;margin:5px}
-button:hover{background:#3730a3}
-.nodes{display:flex;gap:8px;flex-wrap:wrap;align-items:center;direction:ltr;margin:18px 0}
-.node{background:#e0e7ff;border:2px solid #818cf8;border-radius:10px;padding:12px 17px;font-weight:bold}
-.arrow{color:#6366f1}
-.result{background:#dcfce7;border-color:#22c55e}
-.highlight{background:#fef08a;border-color:#eab308}
-.small{color:#64748b;font-size:14px}
-.step{background:#f8fafc;padding:14px;border-radius:10px;margin:10px 0}
-.stats{display:flex;gap:15px;flex-wrap:wrap}
-.stat{background:#eef2ff;padding:15px;border-radius:12px;flex:1;min-width:150px;text-align:center}
-.error{color:#dc2626}
+body{margin:0}
+.wrap{max-width:1160px;margin:auto;padding:22px}
+header{background:linear-gradient(115deg,#172c57,#2d65b4);color:white;border-radius:20px;padding:28px 32px}
+header h1{margin:0 0 10px;font-size:30px}
+header p{margin:0;color:#e4efff;line-height:1.7}
+.pill{display:inline-block;background:#ffffff20;border:1px solid #ffffff45;border-radius:30px;padding:6px 12px;margin:14px 0 0;font-size:13px}
+.panel{background:#fff;border:1px solid #dfe7f2;border-radius:17px;padding:22px;margin:17px 0;box-shadow:0 3px 15px #182e4a08}
+h2{font-size:20px;margin:0 0 15px}
+h3{font-size:16px;margin:14px 0 8px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:15px}
+.field label{display:block;font-weight:700;margin-bottom:8px}
+input,select{font:inherit;border:1px solid #b8c7db;border-radius:10px;padding:12px;background:white}
+input{width:100%;direction:ltr;text-align:left}
+input:focus-visible,select:focus-visible,button:focus-visible{outline:3px solid #89b8fa;outline-offset:2px}
+.help,.muted{color:#5b6d85;font-size:13px;line-height:1.65}
+.controls{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:18px}
+button{border:0;border-radius:10px;background:#235eae;color:white;font:inherit;font-weight:700;padding:11px 17px;cursor:pointer}
+button.secondary{background:#e9f0fa;color:#244e80}
+button:disabled{opacity:.4;cursor:not-allowed}
+.error{color:#b42318;font-weight:700;min-height:19px;margin-top:10px}
+.formula{direction:ltr;text-align:center;background:#f0f5ff;border-radius:10px;padding:15px;font-size:21px;overflow:auto}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:16px}
+.stat{background:#f3f7fe;border-radius:12px;padding:14px}
+.stat small{display:block;color:#526785;font-size:12px}
+.stat strong{display:block;font-size:21px;margin-top:8px;direction:ltr;text-align:right}
+.nodes{display:flex;direction:ltr;align-items:center;gap:7px;overflow-x:auto;padding:12px 2px}
+.node{flex-shrink:0;border:2px solid #4779b9;background:#eff5ff;border-radius:9px;min-width:58px;text-align:center;padding:11px 7px;font-weight:bold}
+.node.active{border-color:#ed9d2d;background:#fff2d9;box-shadow:0 0 0 3px #ffda984a}
+.node.done{border-color:#23a17e;background:#e7faf3}
+.arrow{font-size:20px;color:#6784aa}
+.list-title{font-weight:700;margin-top:13px}
+.tablewrap{overflow:auto}
+table{width:100%;border-collapse:collapse;min-width:530px}
+th,td{border-bottom:1px solid #e1e8f1;padding:10px;text-align:right}
+th{background:#f1f5fc}
+td.expr{direction:ltr;text-align:left;font-family:Consolas,monospace;font-size:13px}
+.tabs{display:flex;gap:8px;flex-wrap:wrap}
+.tabs button{font-size:13px}
+.steps{background:#f7f9fd;border:1px solid #e2e9f4;border-radius:12px;padding:17px}
+.stepvalue{font-size:25px;color:#1d559d;font-weight:bold;direction:ltr;text-align:center;margin:12px}
+.code{white-space:pre-wrap;direction:ltr;text-align:left;background:#15233c;color:#e8f1ff;padding:17px;border-radius:12px;overflow-x:auto;font-size:13px;line-height:1.65}
+.good{color:#087657;font-weight:700}
+.bad{color:#b42318;font-weight:700}
+.compare{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.compare>div{background:#f3f7fd;border-radius:12px;padding:16px}
+.compare b{display:block;margin-bottom:8px}
+.note{border-right:4px solid #3d76bd;background:#f0f6ff;padding:12px 15px;border-radius:7px;line-height:1.7}
+.hidden{display:none}
+footer{text-align:center;color:#667991;font-size:12px;margin:24px 0}
+@media(max-width:680px){
+.grid,.compare{grid-template-columns:1fr}
+.stats{grid-template-columns:repeat(2,1fr)}
+.wrap{padding:10px}
+header{padding:22px}
+header h1{font-size:24px}
+.panel{padding:15px}
+}
 </style>
 </head>
 <body>
-
+<main class="wrap">
 <header>
-<h1>🔗 מעבדת הרשימות המקושרות</h1>
-<p>מבני נתונים | חישוב רשימת L₃</p>
+<h1>מעבדת הרשימות המקושרות L₃</h1>
+<p>מימוש אמיתי של רשימות חד־כיווניות ודו־כיווניות, המחשה אינטראקטיבית, בדיקות נכונות וניתוח סיבוכיות.</p>
+<span class="pill">✓ ללא הפיכת רשימות &nbsp; ✓ ללא מערכים באלגוריתם &nbsp; ✓ O(n²) בשני הסעיפים</span>
 </header>
 
-<main>
-<section class="card">
-<h2>📥 הזנת נתונים</h2>
-<label>רשימה ראשונה L₁</label>
-<input id="a" value="1,2,3" placeholder="1,2,3">
-<label>רשימה שנייה L₂</label>
-<input id="b" value="4,5,6" placeholder="4,5,6">
-
-<label>סוג הרשימות</label>
-<select id="mode">
-<option value="single">סעיף א׳ — חד־כיווניות</option>
-<option value="double">סעיף ב׳ — דו־כיווניות</option>
-</select>
-
-<button onclick="calculate()">🚀 חשבי תוצאה</button>
-<button onclick="example()">🔄 דוגמה</button>
-<p id="error" class="error"></p>
-</section>
-
-<section class="card">
-<h2>🔍 הרשימות המקושרות</h2>
-<h3>L₁</h3><div id="listA" class="nodes"></div>
-<h3>L₂</h3><div id="listB" class="nodes"></div>
-<h3>L₃ — התוצאה</h3><div id="listC" class="nodes"></div>
-</section>
-
-<section class="card">
-<h2>📊 נתוני האלגוריתם</h2>
-<div class="stats">
-<div class="stat">זמן ריצה<br><strong id="time">—</strong></div>
-<div class="stat">פעולות כפל<br><strong id="ops">—</strong></div>
-<div class="stat">סיבוכיות<br><strong>O(n²)</strong></div>
+<section class="panel">
+<h2>1. הזנת נתונים</h2>
+<div class="grid">
+<div class="field">
+<label for="a">L₁ — ערכי a</label>
+<input id="a" value="1, 2, 3, 4" autocomplete="off">
+<div class="help">מספרים טבעיים, מופרדים בפסיקים</div>
 </div>
+<div class="field">
+<label for="b">L₂ — ערכי b</label>
+<input id="b" value="5, 6, 7, 8" autocomplete="off">
+<div class="help">שתי הרשימות חייבות להיות באותו אורך</div>
+</div>
+</div>
+<div class="controls">
+<label for="mode"><b>סעיף:</b></label>
+<select id="mode">
+<option value="single">א׳ — רשימות חד־כיווניות</option>
+<option value="double">ב׳ — רשימות דו־כיווניות</option>
+</select>
+<button id="run">חשב את L₃</button>
+<button id="example" class="secondary">דוגמה נוספת</button>
+<button id="clear" class="secondary">נקה</button>
+</div>
+<div id="error" class="error" role="alert"></div>
 </section>
 
-<section class="card">
-<h2>🧮 הסבר החישוב</h2>
-<p>בחרי איבר ברשימת התוצאה כדי לראות כיצד חושב.</p>
-<div id="steps"></div>
+<section class="panel">
+<h2>2. המחשת הרשימות המקושרות</h2>
+<div id="lists" class="muted">יש להזין נתונים וללחוץ על חישוב.</div>
 </section>
 
-<section class="card">
-<h2>📚 הסבר האלגוריתם</h2>
-<p>האיבר במקום k מחושב לפי:</p>
-<p style="text-align:center;font-size:22px">
-cₖ = Σ aᵢ · bₖ₋ᵢ₊₁
-</p>
-<p><b>סעיף א׳:</b> הרשימות חד־כיווניות. משתמשים במצביע שמתקדם ברשימה הראשונה ובמצביעים שמתחילים מראש הרשימה השנייה, ללא היפוך הרשימות.</p>
-<p><b>סעיף ב׳:</b> הרשימות דו־כיווניות. מצביע אחד מתקדם קדימה ברשימה הראשונה, והשני אחורה ברשימה השנייה.</p>
-<p>בשני המקרים סיבוכיות הזמן היא O(n²).</p>
+<section class="panel">
+<h2>3. תוצאות החישוב</h2>
+<div class="formula">cₖ = ∑ᵢ₌₁ᵏ aᵢ · bₖ₋ᵢ₊₁</div>
+<div class="stats">
+<div class="stat"><small>מספר איברים n</small><strong id="n">—</strong></div>
+<div class="stat"><small>זמן האלגוריתם (ms)</small><strong id="time">—</strong></div>
+<div class="stat"><small>מספר מכפלות</small><strong id="ops">—</strong></div>
+<div class="stat"><small>סיבוכיות זמן</small><strong id="complexity">—</strong></div>
+</div>
+<p class="help">הזמן נמדד באמצעות performance.now() עבור האלגוריתם בלבד, ללא ציור המסך או בניית רשימות הקלט. במדידות קצרות התוצאה משתנה בין הרצות.</p>
+<div id="result" class="tablewrap"></div>
 </section>
+
+<section class="panel">
+<h2>4. חישוב צעד אחר צעד</h2>
+<p class="muted">בחרו את cₖ כדי לראות אילו איברים מוכפלים ואיך מתקבל הסכום.</p>
+<div id="steparea" class="muted">יש לבצע חישוב תחילה.</div>
+</section>
+
+<section class="panel">
+<h2>5. הסבר האלגוריתם וסיבוכיות</h2>
+<div class="compare">
+<div>
+<b>סעיף א׳ — חד־כיווניות</b>
+עוברים על כל צומת aᵢ, ואז על תחילת L₂ ועל הצמתים המתאימים ב-L₃. בכל צעד מוסיפים aᵢ·bⱼ לצומת cᵢ₊ⱼ₋₁. כל התקדמות היא רק באמצעות next.
+</div>
+<div>
+<b>סעיף ב׳ — דו־כיווניות</b>
+עבור כל k מתחילים בראש L₁ ובצומת ה-k של L₂. מצביע אחד מתקדם עם next והשני חוזר עם prev, ומחברים את המכפלות.
+</div>
+</div>
+<p class="note"><b>ניתוח:</b> בשני הסעיפים יש בדיוק n(n+1)/2 מכפלות, ולכן זמן הריצה הוא Θ(n²). זיכרון נוסף Θ(n) לרשימת הפלט. הרשימות המקוריות אינן משתנות.</p>
+<h3>פסאודו־קוד לסעיף הנבחר</h3>
+<div id="pseudo" class="code"></div>
+</section>
+
+<section class="panel">
+<h2>6. בדיקות נכונות אוטומטיות</h2>
+<p class="muted">הרצת בדיקות שמשוות את שני המימושים לחישוב ייחוס מתמטי, כולל מקרה של איבר יחיד וקלטים שונים.</p>
+<button id="tests" class="secondary">הרץ בדיקות</button>
+<div id="testresult" aria-live="polite" style="margin-top:12px"></div>
+</section>
+<footer>קובץ HTML עצמאי · ללא ספריות חיצוניות · עובד גם ללא חיבור לאינטרנט</footer>
 </main>
 
 <script>
-class Node{
+'use strict';
+
+class Node {
  constructor(value){
   this.value=value;
   this.next=null;
+ }
+}
+
+class DoubleNode extends Node {
+ constructor(value){
+  super(value);
   this.prev=null;
  }
 }
-function makeList(values,double){
- let head=null,tail=null;
- for(const value of values){
-  const node=new Node(value);
-  if(!head)head=node;
-  else{
-   tail.next=node;
-   if(double)node.prev=tail;
-  }
-  tail=node;
+
+class LinkedList {
+ constructor(doubly=false){
+  this.head=null;
+  this.tail=null;
+  this.length=0;
+  this.doubly=doubly;
  }
- return {head,tail};
+ append(value){
+  const p=this.doubly?new DoubleNode(value):new Node(value);
+  if(this.tail){
+   this.tail.next=p;
+   if(this.doubly)p.prev=this.tail;
+  }else this.head=p;
+  this.tail=p;
+  this.length++;
+  return p;
+ }
 }
+
+function fromValues(values,doubly){
+ const list=new LinkedList(doubly);
+ for(const x of values)list.append(x);
+ return list;
+}
+
+// O(n^2) — singly linked lists, next pointers only
+function singleConvolution(a,b){
+ const out=new LinkedList(false);
+ for(let i=0;i<a.length;i++)out.append(0);
+ let p=a.head,multiplications=0;
+ for(let i=0;i<a.length;i++){
+  let q=b.head,r=out.head;
+  for(let skip=0;skip<i;skip++)r=r.next;
+  while(r){
+   r.value+=p.value*q.value;
+   multiplications++;
+   q=q.next;
+   r=r.next;
+  }
+  p=p.next;
+ }
+ return {out,multiplications};
+}
+
+// O(n^2) — doubly linked lists, next and prev
+function doubleConvolution(a,b){
+ const out=new LinkedList(true);
+ let end=b.head,multiplications=0;
+ for(let k=1;k<=a.length;k++){
+  let p=a.head,q=end,sum=0;
+  while(q){
+   sum+=p.value*q.value;
+   multiplications++;
+   p=p.next;
+   q=q.prev;
+  }
+  out.append(sum);
+  end=end.next;
+ }
+ return {out,multiplications};
+}
+
+const $=id=>document.getElementById(id);
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({
+ '&':'&amp;',
+ '<':'&lt;',
+ '>':'&gt;',
+ '"':'&quot;',
+ "'":'&#39;'
+}[c]));
+
+let state=null,step=1;
+
 function parse(id){
- const text=document.getElementById(id).value.trim();
- if(!text)throw Error("יש להזין ערכים בשתי הרשימות");
- const parts=text.split(",");
- const values=parts.map(x=>Number(x.trim()));
- if(parts.some(x=>!x.trim())||values.some(x=>!Number.isSafeInteger(x)))
-  throw Error("יש להזין מספרים שלמים, מופרדים בפסיקים");
+ const raw=$(id).value.trim();
+ if(!raw)throw Error('יש להזין ערכים בשתי הרשימות.');
+ const parts=raw.split(/[,،]/).map(x=>x.trim());
+ if(parts.length>120)
+  throw Error('אפשר להזין עד 120 איברים בכל רשימה כדי לשמור על תצוגה נוחה.');
+ if(parts.some(x=>!/^\d+$/.test(x)||!Number.isSafeInteger(Number(x))||Number(x)<1))
+  throw Error('לפי דרישות התרגיל, יש להזין מספרים טבעיים חיוביים מופרדים בפסיקים.');
+ return parts.map(Number);
+}
+
+function listHtml(list,label,active=-1){
+ let html=`<div class="list-title">${esc(label)}</div><div class="nodes">`;
+ let p=list.head,i=0;
+ while(p){
+  if(i)html+=`<span class="arrow">${list.doubly?'⇄':'→'}</span>`;
+  html+=`<span class="node ${i===active?'active':''}">${esc(p.value)}</span>`;
+  p=p.next;
+  i++;
+ }
+ return html+'<span class="arrow">→ null</span></div>';
+}
+
+function outputValues(list){
+ const values=[];
+ for(let p=list.head;p;p=p.next)values.push(p.value);
  return values;
 }
-function render(id,values,result=false){
- const el=document.getElementById(id);
- el.innerHTML="";
- values.forEach((v,i)=>{
-  const node=document.createElement("div");
-  node.className="node"+(result?" result":"");
-  node.textContent=v;
-  if(result)node.onclick=()=>showStep(i);
-  el.appendChild(node);
-  if(i<values.length-1){
-   const arrow=document.createElement("span");
-   arrow.className="arrow";
-   arrow.textContent="→";
-   el.appendChild(arrow);
+
+function compute(){
+ try{
+  $('error').textContent='';
+  const av=parse('a'),bv=parse('b');
+  if(av.length!==bv.length)
+   throw Error('שתי הרשימות חייבות להכיל אותו מספר איברים.');
+  const doubly=$('mode').value==='double';
+  const a=fromValues(av,doubly),b=fromValues(bv,doubly);
+  const start=performance.now();
+  const {out,multiplications}=doubly?
+   doubleConvolution(a,b):singleConvolution(a,b);
+  const elapsed=performance.now()-start;
+  const values=outputValues(out);
+  state={av,bv,a,b,out,values,doubly};
+  step=1;
+  $('n').textContent=av.length;
+  $('time').textContent=elapsed.toFixed(4);
+  $('ops').textContent=multiplications.toLocaleString('en-US');
+  $('complexity').textContent='Θ(n²)';
+  let rows='';
+  for(let k=1;k<=av.length;k++){
+   const terms=[];
+   for(let i=0;i<k;i++)
+    terms.push(`(${av[i]} × ${bv[k-i-1]})`);
+   rows+=`<tr><td>c<sub>${k}</sub></td><td class="expr">${esc(terms.join(' + '))}</td><td><b>${esc(values[k-1])}</b></td></tr>`;
   }
+  $('result').innerHTML=`<table><thead><tr><th>איבר</th><th>החישוב</th><th>התוצאה</th></tr></thead><tbody>${rows}</tbody></table>`;
+  renderStep();
+  renderPseudo();
+ }catch(e){
+  $('error').textContent=e.message;
+ }
+}
+
+function renderStep(){
+ if(!state)return;
+ const {av,bv,a,b,out,values}=state;
+ const k=step;
+ let terms=[],total=0;
+ for(let i=0;i<k;i++){
+  terms.push(`${av[i]} × ${bv[k-i-1]}`);
+  total+=av[i]*bv[k-i-1];
+ }
+ let buttons='';
+ for(let i=1;i<=av.length;i++)
+  buttons+=`<button class="${i===k?'':'secondary'}" data-k="${i}" aria-pressed="${i===k}">c${i}</button>`;
+ $('steparea').innerHTML=`
+ <div class="steps">
+ <div class="tabs">${buttons}</div>
+ <h3>חישוב c<sub>${k}</sub></h3>
+ <div class="formula">${esc(terms.join(' + '))} = ${esc(total)}</div>
+ <div class="stepvalue">c${k} = ${esc(values[k-1])}</div>
+ <div class="controls">
+ <button class="secondary" id="prev" ${k===1?'disabled':''}>הקודם</button>
+ <button class="secondary" id="next" ${k===av.length?'disabled':''}>הבא</button>
+ </div></div>`;
+ $('lists').innerHTML=
+  listHtml(a,'L₁ — רשימת הקלט הראשונה')+
+  listHtml(b,'L₂ — רשימת הקלט השנייה')+
+  listHtml(out,'L₃ — רשימת התוצאה (האיבר הנבחר מודגש)',k-1);
+ $('steparea').querySelectorAll('[data-k]').forEach(btn=>
+  btn.addEventListener('click',()=>{
+   step=Number(btn.dataset.k);
+   renderStep();
+  })
+ );
+ $('prev').addEventListener('click',()=>{
+  step--;
+  renderStep();
+ });
+ $('next').addEventListener('click',()=>{
+  step++;
+  renderStep();
  });
 }
-let calculations=[];
-function calculate(){
- const error=document.getElementById("error");
- error.textContent="";
- try{
-  const a=parse("a"),b=parse("b");
-  if(a.length!==b.length)throw Error("שתי הרשימות חייבות להיות באותו אורך");
-  if(a.length>2000)throw Error("נא להזין עד 2000 איברים");
-  const double=document.getElementById("mode").value==="double";
-  const A=makeList(a,double),B=makeList(b,double);
-  const n=a.length;
-  let result=[],operations=0;
-  calculations=[];
-  const start=performance.now();
-  if(double){
-   let end=B.head;
-   for(let k=1;k<=n;k++){
-    let p=A.head,q=end,sum=0,terms=[];
-    for(let i=1;i<=k;i++){
-     const product=p.value*q.value;
-     sum+=product;
-     terms.push(`${p.value}×${q.value}`);
-     operations++;
-     p=p.next;q=q.prev;
-    }
-    result.push(sum);
-    calculations.push(terms);
-    end=end.next;
-   }
-  }else{
-   let end=B.head;
-   for(let k=1;k<=n;k++){
-    let p=A.head,sum=0,terms=[];
-    for(let i=1;i<=k;i++){
-     let q=B.head;
-     for(let j=i;j<k;j++)q=q.next;
-     const product=p.value*q.value;
-     sum+=product;
-     terms.push(`${p.value}×${q.value}`);
-     operations++;
-     p=p.next;
-    }
-    result.push(sum);
-    calculations.push(terms);
-    end=end.next;
-   }
-  }
-  const elapsed=performance.now()-start;
-  render("listA",a);
-  render("listB",b);
-  render("listC",result,true);
-  document.getElementById("time").textContent=elapsed.toFixed(3)+" ms";
-  document.getElementById("ops").textContent=operations;
-  window.results=result;
-  showStep(0);
- }catch(e){error.textContent=e.message}
+
+function renderPseudo(){
+ $('pseudo').textContent=$('mode').value==='single'?
+`L3 ← רשימה חד־כיוונית עם n צמתים שערכם 0
+p ← L1.head
+for i ← 1 to n:
+    q ← L2.head
+    r ← הצומת ה-i ב-L3  // מעבר עם next בלבד
+    while r ≠ null:
+        r.value ← r.value + p.value × q.value
+        q ← q.next
+        r ← r.next
+    p ← p.next
+return L3`:
+`L3 ← רשימה דו־כיוונית ריקה
+end ← L2.head
+for k ← 1 to n:
+    p ← L1.head
+    q ← end
+    sum ← 0
+    while q ≠ null:
+        sum ← sum + p.value × q.value
+        p ← p.next
+        q ← q.prev
+    L3.append(sum)
+    end ← end.next
+return L3`;
 }
-function showStep(i){
- const terms=calculations[i];
- const nodes=document.querySelectorAll("#listC .node");
- nodes.forEach((node,j)=>node.classList.toggle("highlight",i===j));
- document.getElementById("steps").innerHTML=
- `<div class="step"><h3>חישוב c${i+1}</h3>
- <p>${terms.join(" + ")}</p>
- <h3>תוצאה: ${window.results[i]}</h3></div>`;
+
+function tests(){
+ const cases=[
+  [[1],[7]],
+  [[1,2,3],[4,5,6]],
+  [[2,1,3,5,4],[4,3,2,1,6]],
+  [[1,1,1,1],[1,1,1,1]],
+  [[10,20,30],[3,2,1]]
+ ];
+ let passed=0;
+ for(const [av,bv] of cases){
+  const expected=av.map((_,k)=>
+   av.slice(0,k+1).reduce((s,v,i)=>s+v*bv[k-i],0)
+  );
+  const s=outputValues(
+   singleConvolution(fromValues(av,false),fromValues(bv,false)).out
+  );
+  const d=outputValues(
+   doubleConvolution(fromValues(av,true),fromValues(bv,true)).out
+  );
+  if(JSON.stringify(expected)===JSON.stringify(s)&&
+     JSON.stringify(s)===JSON.stringify(d))
+   passed++;
+ }
+ $('testresult').innerHTML=
+  `<span class="${passed===cases.length?'good':'bad'}">${passed} מתוך ${cases.length} בדיקות עברו בהצלחה.</span>`;
 }
-function example(){
- document.getElementById("a").value="1,2,3";
- document.getElementById("b").value="4,5,6";
- calculate();
-}
-calculate();
+
+$('run').addEventListener('click',compute);
+$('example').addEventListener('click',()=>{
+ $('a').value='2, 1, 3, 5, 4';
+ $('b').value='4, 3, 2, 1, 6';
+ compute();
+});
+$('clear').addEventListener('click',()=>{
+ $('a').value='';
+ $('b').value='';
+ $('error').textContent='';
+ $('lists').textContent='';
+ $('result').textContent='';
+ $('steparea').textContent='';
+ for(const id of ['n','time','ops','complexity'])
+  $(id).textContent='—';
+ state=null;
+});
+$('mode').addEventListener('change',compute);
+$('tests').addEventListener('click',tests);
+compute();
 </script>
 </body>
 </html>
