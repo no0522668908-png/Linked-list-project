@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>מעבדת הרשימות המקושרות</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#f0f4ff;font-family:Arial,sans-serif;color:#172554}
+header{background:linear-gradient(120deg,#4338ca,#0891b2);color:white;padding:35px;text-align:center}
+main{max-width:950px;margin:25px auto;padding:15px}
+.card{background:white;border-radius:18px;padding:25px;margin-bottom:20px;box-shadow:0 5px 20px #17255415}
+h1{margin:0 0 12px}h2{color:#3730a3}
+input,select{width:100%;padding:13px;margin:8px 0 18px;border:1px solid #cbd5e1;border-radius:9px;font-size:17px;direction:ltr;text-align:left}
+button{background:#4f46e5;color:white;border:0;border-radius:10px;padding:13px 22px;font-size:16px;cursor:pointer;margin:5px}
+button:hover{background:#3730a3}
+.nodes{display:flex;gap:8px;flex-wrap:wrap;align-items:center;direction:ltr;margin:18px 0}
+.node{background:#e0e7ff;border:2px solid #818cf8;border-radius:10px;padding:12px 17px;font-weight:bold}
+.arrow{color:#6366f1}
+.result{background:#dcfce7;border-color:#22c55e}
+.highlight{background:#fef08a;border-color:#eab308}
+.small{color:#64748b;font-size:14px}
+.step{background:#f8fafc;padding:14px;border-radius:10px;margin:10px 0}
+.stats{display:flex;gap:15px;flex-wrap:wrap}
+.stat{background:#eef2ff;padding:15px;border-radius:12px;flex:1;min-width:150px;text-align:center}
+.error{color:#dc2626}
+</style>
+</head>
+<body>
+
+<header>
+<h1>🔗 מעבדת הרשימות המקושרות</h1>
+<p>מבני נתונים | חישוב רשימת L₃</p>
+</header>
+
+<main>
+<section class="card">
+<h2>📥 הזנת נתונים</h2>
+<label>רשימה ראשונה L₁</label>
+<input id="a" value="1,2,3" placeholder="1,2,3">
+<label>רשימה שנייה L₂</label>
+<input id="b" value="4,5,6" placeholder="4,5,6">
+
+<label>סוג הרשימות</label>
+<select id="mode">
+<option value="single">סעיף א׳ — חד־כיווניות</option>
+<option value="double">סעיף ב׳ — דו־כיווניות</option>
+</select>
+
+<button onclick="calculate()">🚀 חשבי תוצאה</button>
+<button onclick="example()">🔄 דוגמה</button>
+<p id="error" class="error"></p>
+</section>
+
+<section class="card">
+<h2>🔍 הרשימות המקושרות</h2>
+<h3>L₁</h3><div id="listA" class="nodes"></div>
+<h3>L₂</h3><div id="listB" class="nodes"></div>
+<h3>L₃ — התוצאה</h3><div id="listC" class="nodes"></div>
+</section>
+
+<section class="card">
+<h2>📊 נתוני האלגוריתם</h2>
+<div class="stats">
+<div class="stat">זמן ריצה<br><strong id="time">—</strong></div>
+<div class="stat">פעולות כפל<br><strong id="ops">—</strong></div>
+<div class="stat">סיבוכיות<br><strong>O(n²)</strong></div>
+</div>
+</section>
+
+<section class="card">
+<h2>🧮 הסבר החישוב</h2>
+<p>בחרי איבר ברשימת התוצאה כדי לראות כיצד חושב.</p>
+<div id="steps"></div>
+</section>
+
+<section class="card">
+<h2>📚 הסבר האלגוריתם</h2>
+<p>האיבר במקום k מחושב לפי:</p>
+<p style="text-align:center;font-size:22px">
+cₖ = Σ aᵢ · bₖ₋ᵢ₊₁
+</p>
+<p><b>סעיף א׳:</b> הרשימות חד־כיווניות. משתמשים במצביע שמתקדם ברשימה הראשונה ובמצביעים שמתחילים מראש הרשימה השנייה, ללא היפוך הרשימות.</p>
+<p><b>סעיף ב׳:</b> הרשימות דו־כיווניות. מצביע אחד מתקדם קדימה ברשימה הראשונה, והשני אחורה ברשימה השנייה.</p>
+<p>בשני המקרים סיבוכיות הזמן היא O(n²).</p>
+</section>
+</main>
+
+<script>
+class Node{
+ constructor(value){
+  this.value=value;
+  this.next=null;
+  this.prev=null;
+ }
+}
+function makeList(values,double){
+ let head=null,tail=null;
+ for(const value of values){
+  const node=new Node(value);
+  if(!head)head=node;
+  else{
+   tail.next=node;
+   if(double)node.prev=tail;
+  }
+  tail=node;
+ }
+ return {head,tail};
+}
+function parse(id){
+ const text=document.getElementById(id).value.trim();
+ if(!text)throw Error("יש להזין ערכים בשתי הרשימות");
+ const parts=text.split(",");
+ const values=parts.map(x=>Number(x.trim()));
+ if(parts.some(x=>!x.trim())||values.some(x=>!Number.isSafeInteger(x)))
+  throw Error("יש להזין מספרים שלמים, מופרדים בפסיקים");
+ return values;
+}
+function render(id,values,result=false){
+ const el=document.getElementById(id);
+ el.innerHTML="";
+ values.forEach((v,i)=>{
+  const node=document.createElement("div");
+  node.className="node"+(result?" result":"");
+  node.textContent=v;
+  if(result)node.onclick=()=>showStep(i);
+  el.appendChild(node);
+  if(i<values.length-1){
+   const arrow=document.createElement("span");
+   arrow.className="arrow";
+   arrow.textContent="→";
+   el.appendChild(arrow);
+  }
+ });
+}
+let calculations=[];
+function calculate(){
+ const error=document.getElementById("error");
+ error.textContent="";
+ try{
+  const a=parse("a"),b=parse("b");
+  if(a.length!==b.length)throw Error("שתי הרשימות חייבות להיות באותו אורך");
+  if(a.length>2000)throw Error("נא להזין עד 2000 איברים");
+  const double=document.getElementById("mode").value==="double";
+  const A=makeList(a,double),B=makeList(b,double);
+  const n=a.length;
+  let result=[],operations=0;
+  calculations=[];
+  const start=performance.now();
+  if(double){
+   let end=B.head;
+   for(let k=1;k<=n;k++){
+    let p=A.head,q=end,sum=0,terms=[];
+    for(let i=1;i<=k;i++){
+     const product=p.value*q.value;
+     sum+=product;
+     terms.push(`${p.value}×${q.value}`);
+     operations++;
+     p=p.next;q=q.prev;
+    }
+    result.push(sum);
+    calculations.push(terms);
+    end=end.next;
+   }
+  }else{
+   let end=B.head;
+   for(let k=1;k<=n;k++){
+    let p=A.head,sum=0,terms=[];
+    for(let i=1;i<=k;i++){
+     let q=B.head;
+     for(let j=i;j<k;j++)q=q.next;
+     const product=p.value*q.value;
+     sum+=product;
+     terms.push(`${p.value}×${q.value}`);
+     operations++;
+     p=p.next;
+    }
+    result.push(sum);
+    calculations.push(terms);
+    end=end.next;
+   }
+  }
+  const elapsed=performance.now()-start;
+  render("listA",a);
+  render("listB",b);
+  render("listC",result,true);
+  document.getElementById("time").textContent=elapsed.toFixed(3)+" ms";
+  document.getElementById("ops").textContent=operations;
+  window.results=result;
+  showStep(0);
+ }catch(e){error.textContent=e.message}
+}
+function showStep(i){
+ const terms=calculations[i];
+ const nodes=document.querySelectorAll("#listC .node");
+ nodes.forEach((node,j)=>node.classList.toggle("highlight",i===j));
+ document.getElementById("steps").innerHTML=
+ `<div class="step"><h3>חישוב c${i+1}</h3>
+ <p>${terms.join(" + ")}</p>
+ <h3>תוצאה: ${window.results[i]}</h3></div>`;
+}
+function example(){
+ document.getElementById("a").value="1,2,3";
+ document.getElementById("b").value="4,5,6";
+ calculate();
+}
+calculate();
+</script>
+</body>
+</html>
